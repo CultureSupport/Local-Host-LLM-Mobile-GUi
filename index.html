@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Genesis Client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #020408; color: white; margin: 0; padding: 0; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        
+        /* Device Frame Styling */
+        .device-frame { 
+            width: 400px; 
+            height: 500px; 
+            border: 6px solid #1a1c22; 
+            border-radius: 48px; 
+            position: relative; 
+            overflow: hidden; 
+            background: #000; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+        }
+
+        /* Glassmorphism for the sticky footer input */
+        .sticky-prompt {
+            background: rgba(5, 7, 10, 0.85);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="device-frame shadow-[0_0_80px_rgba(37,99,235,0.1)]">
+        <!-- Main Client Container -->
+        <div id="app-container" class="w-full h-full flex flex-col bg-[#020408]">
+            
+            <!-- Mobile Status Bar (Fixed Top) -->
+            <div class="px-6 pt-4 pb-2 flex justify-between items-center text-[10px] font-bold opacity-40 shrink-0 z-30">
+                <span>9:41</span>
+                <div class="flex gap-2">
+                    <i data-lucide="signal" class="w-2.5 h-2.5"></i>
+                    <i data-lucide="wifi" class="w-2.5 h-2.5"></i>
+                    <i data-lucide="battery" class="w-2.5 h-2.5"></i>
+                </div>
+            </div>
+
+            <!-- Header (Fixed Top) -->
+            <div class="px-6 py-2 flex justify-between items-center shrink-0 z-30">
+                <div class="bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-600/20">
+                    <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="flex gap-4 items-center">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-500"></i>
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 border border-white/10"></div>
+                </div>
+            </div>
+
+            <!-- Scrollable Content Area -->
+            <div id="scroll-content" class="flex-1 overflow-y-auto scrollbar-hide px-6 py-4 pb-32">
+                <h2 class="text-2xl font-black italic uppercase tracking-tighter mb-6">Client Terminal</h2>
+                
+                <div id="ai-viewport" class="space-y-4">
+                    <!-- Default State -->
+                    <div id="empty-state" class="aspect-square rounded-3xl bg-white/5 border border-white/5 flex flex-col items-center justify-center text-center p-8 opacity-40">
+                        <i data-lucide="image" class="w-12 h-12 mb-4"></i>
+                        <p class="text-[10px] font-bold uppercase tracking-widest leading-relaxed">System Ready<br>Awaiting Local Prompt</p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loading-state" class="hidden aspect-square rounded-3xl bg-white/5 border border-blue-500/20 flex flex-col items-center justify-center animate-pulse">
+                        <i data-lucide="refresh-cw" class="w-8 h-8 animate-spin text-blue-500 mb-2"></i>
+                        <span class="text-[10px] font-black uppercase tracking-tighter text-blue-400">Syncing Local Node...</span>
+                    </div>
+
+                    <!-- Result State -->
+                    <div id="result-state" class="hidden space-y-4">
+                        <div class="relative aspect-square rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                            <img id="nft-image" src="" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        </div>
+                        <div class="bg-blue-600/10 p-4 rounded-2xl border border-blue-500/20">
+                            <p class="text-[9px] font-black text-blue-400 mb-1 uppercase tracking-widest">Node.js Response</p>
+                            <p id="ai-text" class="text-[11px] leading-relaxed text-slate-300 italic"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky Footer Prompt Window -->
+            <div class="sticky-prompt absolute bottom-0 left-0 w-full p-4 pb-8 shrink-0 z-40">
+                <!-- Navigation Icons (Mini) -->
+                <div class="flex justify-around mb-4 opacity-40">
+                    <i data-lucide="home" class="w-4 h-4 text-blue-400"></i>
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <i data-lucide="wallet" class="w-4 h-4"></i>
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                </div>
+
+                <!-- Prompt Input Field -->
+                <div class="bg-white/5 border border-white/10 p-1.5 rounded-2xl flex items-center gap-2 focus-within:border-blue-500/50 transition-all shadow-xl">
+                    <input id="prompt-input" type="text" placeholder="Prompt localhost:3000..." 
+                           class="flex-1 bg-transparent border-none outline-none text-[11px] text-white placeholder:text-slate-600 px-3 py-2">
+                    <button onclick="triggerNodeRequest()" 
+                            class="bg-blue-600 p-2 rounded-xl hover:bg-blue-500 active:scale-95 transition-all shadow-lg shadow-blue-600/30">
+                        <i data-lucide="send" class="w-3.5 h-3.5 text-white"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bezel Decoration -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1a1c22] rounded-b-2xl z-50"></div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+        const apiKey = ""; // Gemini API Key for image synthesis fallback
+
+        async function triggerNodeRequest() {
+            const input = document.getElementById('prompt-input');
+            const prompt = input.value;
+            if(!prompt) return;
+
+            // Clear input and update UI State
+            input.value = "";
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('result-state').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+
+            try {
+                // 1. Call Local C# / Node Server
+                const response = await fetch('http://localhost:3000/api/ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+                
+                const data = await response.json();
+                const refinedPrompt = data.reply || prompt;
+
+                // 2. Call Visual Engine (Gemini) for the NFT art
+                const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Digital NFT card artwork: ${refinedPrompt}. High quality, neon aesthetic.` }] }],
+                        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+                    })
+                });
+
+                const geminiData = await geminiRes.json();
+                const base64 = geminiData.candidates[0].content.parts.find(p => p.inlineData).inlineData.data;
+
+                // 3. Update Final GUI State
+                document.getElementById('nft-image').src = `data:image/png;base64,${base64}`;
+                document.getElementById('ai-text').innerText = data.reply;
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('result-state').classList.remove('hidden');
+
+                // Auto-scroll to bottom to show results
+                const scrollArea = document.getElementById('scroll-content');
+                scrollArea.scrollTo({ top: scrollArea.scrollHeight, behavior: 'smooth' });
+
+            } catch (err) {
+                console.error(err);
+                alert("Ensure your local server is running at http://localhost:3000 (CORS must be enabled)");
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
+            }
+        }
+
+        // Allow 'Enter' key to trigger request
+        document.getElementById('prompt-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') triggerNodeRequest();
+        });
+    </script>
+</body>
+</html>
